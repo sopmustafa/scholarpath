@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ScholarPath — Find Your Future</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Sign-In -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: { display:['Playfair Display','serif'], body:['DM Sans','sans-serif'], mono:['DM Mono','monospace'] },
+        colors: {
+          navy:  { 950:'#050c1a', 900:'#0a1628', 800:'#0f2040', 700:'#162a52', 600:'#1e3a6e' },
+          gold:  { 300:'#fde68a', 400:'#f6c90e', 500:'#d4a017' },
+          slate2:{ 300:'#b0bec5', 400:'#8fa3af', 500:'#607d8b' },
+        }
+      }}
+    }
+  </script>
+</head>
+<body class="bg-navy-950 text-white font-body min-h-screen">
+
+<div class="fixed inset-0 pointer-events-none" id="bg-texture"></div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  AUTH PAGES (shown when not logged in)                        -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div id="auth-wrapper" class="hidden min-h-screen flex items-center justify-center p-4">
+  <div class="auth-card w-full max-w-md">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 rounded-2xl bg-gold-400 flex items-center justify-center mx-auto mb-3">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#050c1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      </div>
+      <h1 class="font-display text-2xl font-700">ScholarPath</h1>
+      <p class="text-slate2-400 text-sm mt-1">Find your future</p>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="flex rounded-xl bg-white/05 p-1 mb-6" id="auth-tabs">
+      <button onclick="switchAuthTab('login')"    id="tab-login"    class="auth-tab active flex-1 py-2 text-sm font-medium rounded-lg transition-all">Sign In</button>
+      <button onclick="switchAuthTab('register')" id="tab-register" class="auth-tab flex-1 py-2 text-sm font-medium rounded-lg transition-all">Create Account</button>
+    </div>
+
+    <!-- Error / success banner -->
+    <div id="auth-msg" class="hidden mb-4 px-4 py-3 rounded-xl text-sm"></div>
+
+    <!-- ── LOGIN FORM ── -->
+    <div id="form-login">
+      <div class="space-y-3 mb-4">
+        <div class="input-group">
+          <input id="login-email" type="email" placeholder="Email address" class="auth-input w-full px-4 py-3 rounded-xl text-sm" autocomplete="email"/>
+        </div>
+        <div class="input-group relative">
+          <input id="login-password" type="password" placeholder="Password" class="auth-input w-full px-4 py-3 pr-11 rounded-xl text-sm" autocomplete="current-password"/>
+          <button type="button" onclick="togglePwd('login-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate2-400 hover:text-white">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="text-right mb-4">
+        <button onclick="switchAuthTab('forgot')" class="text-gold-400 text-xs hover:text-gold-300 transition-colors">Forgot password?</button>
+      </div>
+      <button onclick="handleLogin()" class="auth-btn w-full py-3 rounded-xl text-sm font-600 mb-4">Sign In</button>
+
+      <div class="divider mb-4"><span>or continue with</span></div>
+
+      <div id="google-signin-btn" class="flex justify-center mb-2"></div>
+    </div>
+
+    <!-- ── REGISTER FORM ── -->
+    <div id="form-register" class="hidden">
+      <div class="space-y-3 mb-4">
+        <input id="reg-name"     type="text"     placeholder="Full name"       class="auth-input w-full px-4 py-3 rounded-xl text-sm" autocomplete="name"/>
+        <input id="reg-email"    type="email"    placeholder="Email address"   class="auth-input w-full px-4 py-3 rounded-xl text-sm" autocomplete="email"/>
+        <div class="relative">
+          <input id="reg-password" type="password" placeholder="Password (min 6 chars)" class="auth-input w-full px-4 py-3 pr-11 rounded-xl text-sm" autocomplete="new-password"/>
+          <button type="button" onclick="togglePwd('reg-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate2-400 hover:text-white">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <input id="reg-password2" type="password" placeholder="Confirm password" class="auth-input w-full px-4 py-3 rounded-xl text-sm"/>
+      </div>
+      <button onclick="handleRegister()" class="auth-btn w-full py-3 rounded-xl text-sm font-600 mb-4">Create Account</button>
+
+      <div class="divider mb-4"><span>or continue with</span></div>
+      <div id="google-signup-btn" class="flex justify-center"></div>
+    </div>
+
+    <!-- ── FORGOT PASSWORD FORM ── -->
+    <div id="form-forgot" class="hidden">
+      <p class="text-slate2-300 text-sm mb-4">Enter your email and we'll send you a reset link.</p>
+      <input id="forgot-email" type="email" placeholder="Email address" class="auth-input w-full px-4 py-3 rounded-xl text-sm mb-4"/>
+      <button onclick="handleForgot()" class="auth-btn w-full py-3 rounded-xl text-sm font-600 mb-4">Send Reset Link</button>
+      <button onclick="switchAuthTab('login')" class="w-full text-slate2-400 text-sm hover:text-white transition-colors">← Back to sign in</button>
+    </div>
+
+    <!-- ── RESET PASSWORD FORM (shown via URL ?reset=token) ── -->
+    <div id="form-reset" class="hidden">
+      <p class="text-slate2-300 text-sm mb-4">Choose your new password.</p>
+      <div class="space-y-3 mb-4">
+        <input id="reset-password"  type="password" placeholder="New password (min 6 chars)" class="auth-input w-full px-4 py-3 rounded-xl text-sm"/>
+        <input id="reset-password2" type="password" placeholder="Confirm new password"       class="auth-input w-full px-4 py-3 rounded-xl text-sm"/>
+      </div>
+      <button onclick="handleReset()" class="auth-btn w-full py-3 rounded-xl text-sm font-600">Set New Password</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  MAIN APP (shown when logged in)                              -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div id="app-wrapper" class="hidden">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 z-40 sidebar-panel flex flex-col">
+    <div class="px-6 py-6 border-b border-white/10">
+      <div class="flex items-center gap-3 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-gold-400 flex items-center justify-center flex-shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#050c1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <span class="font-display font-700 text-lg text-white tracking-tight">ScholarPath</span>
+      </div>
+      <!-- User avatar + name -->
+      <div class="flex items-center gap-2 mt-3 px-1">
+        <div id="sidebar-avatar" class="w-7 h-7 rounded-full bg-gold-400/20 border border-gold-400/30 flex items-center justify-center text-xs font-600 text-gold-400 overflow-hidden flex-shrink-0">?</div>
+        <span id="sidebar-username" class="text-sm text-slate2-300 truncate">Loading…</span>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-4 py-5 space-y-1 overflow-y-auto">
+      <button onclick="showSection('search')"    class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" data-section="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Explore Scholarships
+      </button>
+      <button onclick="showSection('bookmarks')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" data-section="bookmarks">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+        Bookmarks
+        <span id="bookmark-count-badge" class="ml-auto bg-gold-400 text-navy-950 text-xs font-600 px-1.5 py-0.5 rounded-full hidden">0</span>
+      </button>
+      <button onclick="showSection('deadlines')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" data-section="deadlines">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v4M18 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
+        Deadlines
+      </button>
+      <button onclick="showSection('compare')"   class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" data-section="compare">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        Compare
+        <span id="compare-count-badge" class="ml-auto bg-white/20 text-white text-xs font-600 px-1.5 py-0.5 rounded-full hidden">0</span>
+      </button>
+      <button onclick="showSection('live')"      class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" data-section="live">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Live Listings
+        <span class="ml-auto w-1.5 h-1.5 rounded-full bg-green-400 live-dot"></span>
+      </button>
+
+      <div class="pt-2 pb-1">
+        <div class="h-px bg-white/08 mx-2"></div>
+      </div>
+
+      <button onclick="showSection('profile')"   class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all" data-section="profile">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        My Profile
+      </button>
+    </nav>
+
+    <!-- Sources panel -->
+    <div id="sources-panel" class="px-4 py-3 border-t border-white/10">
+      <p class="text-slate2-400 text-xs">Loading sources…</p>
+    </div>
+
+    <div class="px-4 py-4 border-t border-white/10">
+      <div class="flex items-center justify-between mb-3">
+        <div class="stat-card rounded-lg px-3 py-2 flex-1 text-center">
+          <div class="text-gold-400 font-display font-700 text-xl" id="sidebar-total">—</div>
+          <div class="text-slate2-400 text-xs">Scholarships</div>
+        </div>
+      </div>
+      <button onclick="handleLogout()" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate2-400 hover:text-red-400 hover:bg-red-400/10 transition-all">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Mobile header -->
+  <header class="lg:hidden fixed top-0 left-0 right-0 z-30 mobile-header px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-md bg-gold-400 flex items-center justify-center">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#050c1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      </div>
+      <span class="font-display font-700 text-base">ScholarPath</span>
+    </div>
+    <button onclick="toggleMobileSidebar()" class="p-2 rounded-lg bg-white/10">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <!-- Main content -->
+  <main class="lg:ml-64 min-h-screen">
+
+    <!-- ── SEARCH SECTION ── -->
+    <section id="section-search" class="section-content px-6 pt-8 pb-16 lg:pt-10 mt-14 lg:mt-0">
+      <div class="max-w-5xl mx-auto mb-8">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="h-px w-8 bg-gold-400"></div>
+          <span class="text-gold-400 font-mono text-xs tracking-widest uppercase">Discover</span>
+        </div>
+        <h1 class="font-display text-4xl lg:text-5xl font-700 leading-tight mb-3">Find the perfect<br/><span class="text-gold-400">scholarship</span> for you.</h1>
+        <p class="text-slate2-300 text-base max-w-lg">Filter by country, level, field and more. Try AI search for natural language queries.</p>
+      </div>
+
+      <div class="max-w-5xl mx-auto mb-6">
+        <div class="filter-card rounded-2xl p-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="sm:col-span-2 lg:col-span-4 relative">
+              <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate2-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input id="search-input" type="text" placeholder="Search or ask AI: 'full PhD scholarship for engineering in Europe'…" class="search-input w-full pl-10 pr-4 py-3 rounded-xl text-sm" oninput="filterScholarships()"/>
+            </div>
+            <div class="relative">
+              <select id="country-filter" class="filter-select w-full pl-4 pr-4 py-3 rounded-xl text-sm appearance-none" onchange="filterScholarships()">
+                <option value="">🌍 All Countries</option>
+                <option value="USA">🇺🇸 United States</option>
+                <option value="UK">🇬🇧 United Kingdom</option>
+                <option value="Germany">🇩🇪 Germany</option>
+                <option value="Australia">🇦🇺 Australia</option>
+                <option value="Canada">🇨🇦 Canada</option>
+                <option value="Japan">🇯🇵 Japan</option>
+                <option value="EU">🇪🇺 European Union</option>
+                <option value="Singapore">🇸🇬 Singapore</option>
+                <option value="South Korea">🇰🇷 South Korea</option>
+                <option value="France">🇫🇷 France</option>
+                <option value="Sweden">🇸🇪 Sweden</option>
+                <option value="China">🇨🇳 China</option>
+                <option value="Turkey">🇹🇷 Turkey</option>
+                <option value="Hungary">🇭🇺 Hungary</option>
+                <option value="New Zealand">🇳🇿 New Zealand</option>
+              </select>
+            </div>
+            <div class="relative">
+              <select id="grade-filter" class="filter-select w-full pl-4 pr-4 py-3 rounded-xl text-sm appearance-none" onchange="filterScholarships()">
+                <option value="">📚 All Levels</option>
+                <option value="Undergraduate">Undergraduate</option>
+                <option value="Postgraduate">Postgraduate</option>
+                <option value="PhD">PhD / Doctorate</option>
+              </select>
+            </div>
+            <div class="relative">
+              <select id="field-filter" class="filter-select w-full pl-4 pr-4 py-3 rounded-xl text-sm appearance-none" onchange="filterScholarships()">
+                <option value="">🔬 All Fields</option>
+                <option value="STEM">STEM</option>
+                <option value="Business">Business</option>
+                <option value="Arts">Arts & Humanities</option>
+                <option value="Medicine">Medicine & Health</option>
+                <option value="Law">Law</option>
+                <option value="Social Sciences">Social Sciences</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Any">Open to All Fields</option>
+              </select>
+            </div>
+            <div class="relative">
+              <select id="funding-filter" class="filter-select w-full pl-4 pr-4 py-3 rounded-xl text-sm appearance-none" onchange="filterScholarships()">
+                <option value="">💰 All Funding</option>
+                <option value="Full">Full Funding</option>
+                <option value="Partial">Partial Funding</option>
+              </select>
+            </div>
+          </div>
+          <div class="border-t border-white/10 pt-4">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs font-medium text-slate2-300">Year Range</span>
+              <span class="ml-auto text-gold-400 font-mono text-xs" id="year-range-label">— — —</span>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="flex-1"><label class="text-slate2-400 text-xs mb-1 block">From</label><input type="range" id="year-from" min="2024" max="2032" value="2026" class="year-slider w-full" oninput="updateYearRange()"/></div>
+              <div class="flex-1"><label class="text-slate2-400 text-xs mb-1 block">To</label><input type="range" id="year-to" min="2024" max="2032" value="2030" class="year-slider w-full" oninput="updateYearRange()"/></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between mt-4 flex-wrap gap-2">
+            <div id="active-filters" class="flex items-center gap-2 flex-wrap"></div>
+            <div class="flex items-center gap-3">
+              <span class="text-slate2-400 text-xs"><span id="results-count">—</span> results</span>
+              <button onclick="clearFilters()" class="text-xs text-gold-400 hover:text-gold-300 transition-colors">Clear all</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-5xl mx-auto mb-4 flex items-center justify-between">
+        <select id="sort-filter" class="filter-select-sm text-xs px-3 py-1.5 rounded-lg" onchange="filterScholarships()">
+          <option value="deadline">Deadline (soonest)</option>
+          <option value="amount-high">Amount (highest)</option>
+          <option value="amount-low">Amount (lowest)</option>
+          <option value="name">Name A–Z</option>
+        </select>
+        <div class="flex items-center gap-2">
+          <button onclick="setView('grid')" id="view-grid" class="view-btn active p-1.5 rounded-md"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+          <button onclick="setView('list')" id="view-list" class="view-btn p-1.5 rounded-md"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+        </div>
+      </div>
+
+      <div id="ai-explanation" class="hidden max-w-5xl mx-auto mb-3 px-4 py-2 rounded-xl bg-gold-400/08 border border-gold-400/20 text-gold-400 text-xs"></div>
+      <div id="loading-indicator" class="hidden max-w-5xl mx-auto mb-4 flex items-center gap-2 text-slate2-400 text-sm">
+        <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading…
+      </div>
+
+      <div class="max-w-5xl mx-auto">
+        <div id="scholarship-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+        <div id="no-results" class="hidden text-center py-20">
+          <p class="text-slate2-300 font-display text-lg mb-2">No scholarships found</p>
+          <p class="text-slate2-400 text-sm">Try adjusting your filters or clearing them.</p>
+          <button onclick="clearFilters()" class="mt-4 px-4 py-2 bg-gold-400/20 text-gold-400 rounded-lg text-sm hover:bg-gold-400/30 transition-colors">Clear filters</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── BOOKMARKS ── -->
+    <section id="section-bookmarks" class="section-content hidden px-6 pt-8 pb-16 lg:pt-10 mt-14 lg:mt-0">
+      <div class="max-w-5xl mx-auto mb-8"><div class="flex items-center gap-2 mb-3"><div class="h-px w-8 bg-gold-400"></div><span class="text-gold-400 font-mono text-xs tracking-widest uppercase">Saved</span></div><h1 class="font-display text-4xl font-700 mb-2">Your Bookmarks</h1><p class="text-slate2-300 text-base">Scholarships saved for later review.</p></div>
+      <div class="max-w-5xl mx-auto"><div id="bookmark-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div><div id="no-bookmarks" class="text-center py-24"><p class="text-slate2-300 font-display text-xl mb-2">No bookmarks yet</p><p class="text-slate2-400 text-sm mb-6">Tap the bookmark icon on any scholarship card.</p><button onclick="showSection('search')" class="px-5 py-2.5 bg-gold-400 text-navy-950 rounded-xl text-sm font-600">Explore Scholarships</button></div></div>
+    </section>
+
+    <!-- ── DEADLINES ── -->
+    <section id="section-deadlines" class="section-content hidden px-6 pt-8 pb-16 lg:pt-10 mt-14 lg:mt-0">
+      <div class="max-w-5xl mx-auto mb-8"><div class="flex items-center gap-2 mb-3"><div class="h-px w-8 bg-gold-400"></div><span class="text-gold-400 font-mono text-xs tracking-widest uppercase">Track</span></div><h1 class="font-display text-4xl font-700 mb-2">Deadlines</h1><p class="text-slate2-300 text-base">All upcoming deadlines — urgent ones highlighted.</p></div>
+      <div class="max-w-5xl mx-auto"><div id="deadline-list" class="space-y-3"></div></div>
+    </section>
+
+    <!-- ── COMPARE ── -->
+    <section id="section-compare" class="section-content hidden px-6 pt-8 pb-16 lg:pt-10 mt-14 lg:mt-0">
+      <div class="max-w-5xl mx-auto mb-8"><div class="flex items-center gap-2 mb-3"><div class="h-px w-8 bg-gold-400"></div><span class="text-gold-400 font-mono text-xs tracking-widest uppercase">Analyze</span></div><h1 class="font-display text-4xl font-700 mb-2">Compare</h1><p class="text-slate2-300 text-base">Add up to 3 scholarships to compare side by side.</p></div>
+      <div class="max-w-5xl mx-auto" id="compare-area"><div id="no-compare" class="text-center py-24"><p class="text-slate2-300 font-display text-xl mb-2">Nothing to compare</p><button onclick="showSection('search')" class="mt-4 px-5 py-2.5 bg-gold-400 text-navy-950 rounded-xl text-sm font-600">Browse Scholarships</button></div><div id="compare-table" class="hidden overflow-x-auto"></div></div>
+    </section>
+
+    <!-- ── LIVE LISTINGS ── -->
+    <section id="section-live" class="section-content hidden px-6 pt-8 pb-16 lg:pt-10 mt-14 lg:mt-0">
+      <div class="max-w-5xl mx-auto mb-8">
+        <div class="flex items-center gap-2 mb-3"><div class="h-px w-8 bg-gold-400"></div><span class="text-gold-400 font-mono text-xs tracking-widest uppercase">Live</span><span class="flex items-center gap-1 ml-2"><span class="w-1.5 h-1.5 rounded-full bg-green-400 live-dot"></span><span class="text-green-400 text-xs">Updated hourly</span></span></div>
+        <h1 class="font-display text-4xl font-700 mb-2">Live Listings</h1>
+        <p class="text-slate2-300 text-base">Freshly scraped from scholarship websites. Click any card to visit the source.</p>
+      </div>
+      <div class="max-w-5xl mx-auto"><div id="live-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"><p class="text-slate2-400 col-span-full text-center py-12 text-sm">Loading live listings…</p></div></div>
+    </section>
+
+    <!-- ── PROFILE ── -->
+    <section id="section-profile" class="section-content hidden px-6 pt-8 pb-16 lg:pt-10 mt-14 lg:mt-0">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex items-center gap-2 mb-3"><div class="h-px w-8 bg-gold-400"></div><span class="text-gold-400 font-mono text-xs tracking-widest uppercase">My Account</span></div>
+        <h1 class="font-display text-4xl font-700 mb-8">My Profile</h1>
+
+        <div class="profile-card rounded-2xl p-6 mb-6">
+          <h2 class="font-display text-lg font-600 mb-5 flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Basic Info
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div><label class="profile-label">Full Name</label><input id="p-name"  type="text" class="profile-input w-full" placeholder="Your name"/></div>
+            <div><label class="profile-label">Email</label><input id="p-email" type="email" class="profile-input w-full" placeholder="Email" disabled style="opacity:0.5"/></div>
+            <div class="sm:col-span-2"><label class="profile-label">Bio</label><textarea id="p-bio" rows="3" class="profile-input w-full resize-none" placeholder="Tell others about yourself…"></textarea></div>
+          </div>
+        </div>
+
+        <div class="profile-card rounded-2xl p-6 mb-6">
+          <h2 class="font-display text-lg font-600 mb-5 flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            Study Preferences
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="profile-label">Desired Degree Level</label>
+              <select id="p-degree" class="profile-select w-full">
+                <option value="">Select level…</option>
+                <option value="Undergraduate">Undergraduate</option>
+                <option value="Postgraduate">Postgraduate (Master's)</option>
+                <option value="PhD">PhD / Doctorate</option>
+                <option value="Vocational">Vocational / TVET</option>
+              </select>
+            </div>
+            <div>
+              <label class="profile-label">Preferred Study Country</label>
+              <select id="p-country" class="profile-select w-full">
+                <option value="">Any country</option>
+                <option value="USA">🇺🇸 United States</option>
+                <option value="UK">🇬🇧 United Kingdom</option>
+                <option value="Germany">🇩🇪 Germany</option>
+                <option value="Australia">🇦🇺 Australia</option>
+                <option value="Canada">🇨🇦 Canada</option>
+                <option value="Japan">🇯🇵 Japan</option>
+                <option value="EU">🇪🇺 Europe (any)</option>
+                <option value="Singapore">🇸🇬 Singapore</option>
+                <option value="South Korea">🇰🇷 South Korea</option>
+                <option value="China">🇨🇳 China</option>
+                <option value="France">🇫🇷 France</option>
+                <option value="Sweden">🇸🇪 Sweden</option>
+                <option value="Turkey">🇹🇷 Turkey</option>
+                <option value="New Zealand">🇳🇿 New Zealand</option>
+              </select>
+            </div>
+            <div>
+              <label class="profile-label">Field / Major</label>
+              <select id="p-major" class="profile-select w-full">
+                <option value="">Select major…</option>
+                <optgroup label="Science & Technology">
+                  <option value="Computer Science">Computer Science / IT</option>
+                  <option value="Engineering">Engineering</option>
+                  <option value="Mathematics">Mathematics / Statistics</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Biology">Biology / Life Sciences</option>
+                  <option value="Environmental Science">Environmental Science</option>
+                  <option value="Data Science">Data Science / AI</option>
+                </optgroup>
+                <optgroup label="Health & Medicine">
+                  <option value="Medicine">Medicine / MBBS</option>
+                  <option value="Pharmacy">Pharmacy</option>
+                  <option value="Nursing">Nursing</option>
+                  <option value="Public Health">Public Health</option>
+                  <option value="Dentistry">Dentistry</option>
+                </optgroup>
+                <optgroup label="Business & Economics">
+                  <option value="Business Administration">Business Administration (MBA)</option>
+                  <option value="Economics">Economics</option>
+                  <option value="Finance">Finance / Accounting</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="International Business">International Business</option>
+                </optgroup>
+                <optgroup label="Social Sciences & Humanities">
+                  <option value="Political Science">Political Science / IR</option>
+                  <option value="Sociology">Sociology</option>
+                  <option value="Psychology">Psychology</option>
+                  <option value="Anthropology">Anthropology</option>
+                  <option value="History">History</option>
+                  <option value="Philosophy">Philosophy</option>
+                  <option value="Linguistics">Linguistics / Languages</option>
+                </optgroup>
+                <optgroup label="Arts & Design">
+                  <option value="Fine Arts">Fine Arts / Visual Arts</option>
+                  <option value="Architecture">Architecture</option>
+                  <option value="Design">Design (UX/Graphic/Industrial)</option>
+                  <option value="Music">Music / Performing Arts</option>
+                  <option value="Film">Film / Media Studies</option>
+                </optgroup>
+                <optgroup label="Law & Policy">
+                  <option value="Law">Law / LLB / LLM</option>
+                  <option value="Public Policy">Public Policy</option>
+                  <option value="International Law">International Law</option>
+                </optgroup>
+                <optgroup label="Education">
+                  <option value="Education">Education / Teaching</option>
+                  <option value="Educational Leadership">Educational Leadership</option>
+                </optgroup>
+                <optgroup label="Agriculture & Environment">
+                  <option value="Agriculture">Agriculture / Agronomy</option>
+                  <option value="Forestry">Forestry / Natural Resources</option>
+                  <option value="Climate Science">Climate Science</option>
+                </optgroup>
+              </select>
+            </div>
+            <div>
+              <label class="profile-label">Current GPA / Grade</label>
+              <select id="p-gpa" class="profile-select w-full">
+                <option value="">Select GPA range…</option>
+                <option value="4.0">4.0 / A+</option>
+                <option value="3.7-3.9">3.7–3.9 / A</option>
+                <option value="3.3-3.6">3.3–3.6 / A-/B+</option>
+                <option value="3.0-3.2">3.0–3.2 / B</option>
+                <option value="2.5-2.9">2.5–2.9 / B-/C+</option>
+                <option value="below-2.5">Below 2.5</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <label class="profile-label mb-2 block">Interests / Tags <span class="text-slate2-400 text-xs">(click to toggle)</span></label>
+            <div class="flex flex-wrap gap-2" id="interests-picker">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <div id="profile-msg" class="hidden mb-4 px-4 py-3 rounded-xl text-sm"></div>
+        <button onclick="saveProfile()" class="auth-btn px-8 py-3 rounded-xl text-sm font-600">Save Profile</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── SCHOLARSHIP DETAIL MODAL ── -->
+<div id="modal-overlay" class="fixed inset-0 z-50 hidden items-center justify-center p-4" onclick="closeModal(event)">
+  <div class="modal-bg absolute inset-0"></div>
+  <div id="modal-content" class="modal-card relative max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl p-0"></div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+<!-- Mobile sidebar overlay -->
+<div id="mobile-overlay" class="fixed inset-0 z-30 bg-black/60 hidden lg:hidden" onclick="toggleMobileSidebar()"></div>
+
+<script>
+// ─── Google Client ID ───────────────────────────────────────────
+const GOOGLE_CLIENT_ID = '__GOOGLE_CLIENT_ID__'; // Replace with your actual Google Client ID
+</script>
+<script src="app.js"></script>
+</body>
+</html>
